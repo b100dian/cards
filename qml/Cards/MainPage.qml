@@ -16,13 +16,27 @@ Page {
 
     Component {
         id: cardDelegate
-        Row {
-            spacing: 10
-            Text { text: fullname}
+        ListItem {
+        Column {
+            anchors.fill: cardDelegate.padding
+            ListItemText {
+                id: titleText
+                mode: cardDelegate.mode
+                role: "Title"
+                text: fullname
+            }
+            ListItemText {
+                id: subtitleText
+                mode: cardDelegate.mode
+                role: "SubTitle"
+                text: cell
+            }
+
+        }
         }
     }
 
-    ListView{
+    ListView {
         id: cardList
         anchors.fill: parent
         model: cardModel
@@ -31,7 +45,7 @@ Page {
 
     ProgressBar {
         id: progress
-        anchors.horizontalCenter: parent
+        anchors.centerIn: parent
         minimumValue: 0
         value: 0
     }
@@ -44,8 +58,8 @@ Page {
         }
         onCard:{
             console.log(card);
-            var a = Cards.cardDone(cardName, card);
-            cardModel.append({fullname:a});
+            var item = Cards.cardDone(cardName, card);
+            cardModel.append(item);
             progress.value ++;
         }
     }

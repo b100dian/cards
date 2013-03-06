@@ -24,11 +24,11 @@ class CardDavClient::Impl{
         payload->open(QBuffer::ReadWrite);
         payload->seek(0);
 
-
         QUrl url = expl->baseURL;
         if (!path.isEmpty()) {
             url.setPath(url.path() + "/" + path);
         }
+
         QNetworkRequest request(url);
 
         if (!payloadString.isEmpty()) {
@@ -51,6 +51,10 @@ class CardDavClient::Impl{
 
 public:
     explicit Impl(CardDavClient* parent = 0): expl(parent) {}
+
+    void getRedirect() {
+        query("GET");
+    }
 
     void optionsStart() {
         query("OPTIONS");
@@ -111,7 +115,11 @@ public:
     void getFinished(QNetworkReply* reply) {
         QDir path(expl->baseURL.path());
         QString file = path.relativeFilePath(reply->request().url().path());
-        emit expl->card(file,reply->readAll());
+        if (reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200) {
+            emit expl->card(file,reply->readAll());
+        } else {
+            qDebug()<<"gotFinished with code"<<reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        }
     }
 
 #ifdef CARD_REPORT
@@ -151,17 +159,33 @@ CardDavClient::CardDavClient(QUrl url, QObject *parent) :
 
 void CardDavClient::getCardNamesAsync()
 {
-    impl->optionsStart();
+    impl->getRedirect();
 }
 
 void CardDavClient::getCardAsync(QString cardName) {
     impl->getStart(cardName);
 }
 
+void CardDavClient::setUsername(QString username) {
+    this->_username = username;
+}
+
+void CardDavClient::setPassword(QString password) {
+    this->_password = password;
+}
+
+QString CardDavClient::password() {
+    return this->_password;
+}
+
+QString CardDavClient::username() {
+    return this->_username;
+}
+
 void CardDavClient::authenticationRequired(QNetworkReply* reply, QAuthenticator* authenticator) {
     qDebug() << "authentication required ";
-    authenticator->setUser(QString("b100dian"));
-    authenticator->setPassword(QString("hmmtybkyzcbtlcjo"));
+    authenticator->setUser(_username);
+    authenticator->setPassword(_password);
 }
 
 void CardDavClient::replyError(QNetworkReply::NetworkError networkError) {
@@ -170,16 +194,30 @@ void CardDavClient::replyError(QNetworkReply::NetworkError networkError) {
 
 void CardDavClient::replyFinished(QNetworkReply* reply) {
     QString requestVerb(reply->request().attribute(QNetworkRequest::CustomVerbAttribute).toString());
-    if (requestVerb == "OPTIONS") {
-        impl->optionsFinished(reply);
-    } else if (requestVerb == "PROPFIND") {
-        impl->propfindFinished(reply);
-#ifdef CARD_REPORT
-    } else if (requestVerb == "REPORT") {
-        impl->reportFinished(reply);
-#endif
+    QUrl redirectUrl(reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl());
+
+    if (!redirectUrl.isEmpty()) {
+        if (requestVerb != "GET") {
+            emit error(QString("Unexpected redirect while requesting for ") + requestVerb + QString(" ") + reply->request().url().toString());
+        } else {
+            qDebug()<<"Redirected to:"<<redirectUrl.path();
+            // replay (yes with an a) everything with new URL
+            baseURL.setPath(redirectUrl.path());
+            impl->optionsStart();
+        }
     } else {
-        impl->getFinished(reply);
+
+        if (requestVerb == "OPTIONS") {
+            impl->optionsFinished(reply);
+        } else if (requestVerb == "PROPFIND") {
+            impl->propfindFinished(reply);
+#ifdef CARD_REPORT
+        } else if (requestVerb == "REPORT") {
+            impl->reportFinished(reply);
+#endif
+        } else {
+            impl->getFinished(reply);
+        }
     }
 }
 

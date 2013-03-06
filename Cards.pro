@@ -40,3 +40,11 @@ HEADERS += carddavclient.h
 # Please do not modify the following two lines. Required for deployment.
 include(qmlapplicationviewer/qmlapplicationviewer.pri)
 qtcAddDeployment()
+
+OTHER_FILES +=
+
+RESOURCES += \
+    resources.qrc
+
+VERSION = 0.4
+DEPLOYMENT.display_name="CardDav Client Test"

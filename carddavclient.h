@@ -12,12 +12,18 @@ class CardDavClient : public QObject
 {
     Q_OBJECT
     class Impl;
+    QString _username;
+    QString _password;
 
 public:
     explicit CardDavClient(QUrl baseURL, QObject *parent = 0);
 
     Q_INVOKABLE void getCardNamesAsync();
     Q_INVOKABLE void getCardAsync(QString cardName);
+    Q_INVOKABLE void setUsername(QString _username);
+    Q_INVOKABLE void setPassword(QString _password);
+    Q_INVOKABLE QString username();
+    Q_INVOKABLE QString password();
 
 signals:
     void error(QString message);

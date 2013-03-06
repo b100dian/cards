@@ -10,9 +10,10 @@ function startQuerying(names, model) {
     }
 }
 
-function cardDone(name, data) {
+function cardDone(name, data, done) {
     connections--;
-    nextCard();
+    var more = nextCard();
+    if (!more) done();
 
     return parseCard(data);
 }
@@ -22,8 +23,9 @@ function nextCard() {
     if (i < allNames.length) {
         connections++;
         cardDavClient.getCardAsync(allNames[i]);
+        return true;
     } else {
-        //done
+        return false;
     }
 }
 

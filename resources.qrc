@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="atat">qml/Cards/gfx/icon-m-toolbar-done-white.png</file>
+        <file>qml/Cards/gfx/icon-m-toolbar-done.png</file>
+        <file>qml/Cards/SettingsPage.qml</file>
+        <file>qml/Cards/MainPage.qml</file>
+        <file>qml/Cards/main.qml</file>
+        <file>qml/Cards/data.js</file>
+        <file>qml/Cards/cards.js</file>
+    </qresource>
+</RCC>

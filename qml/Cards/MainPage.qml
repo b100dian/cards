@@ -9,6 +9,12 @@ Page {
     id: mainPage
 
     Component.onCompleted:  {
+    }
+
+    onStatusChanged: {
+        console.log ("MainPage status " + status)
+        if (status != PageStatus.Active || progress.visible) return;
+        if (busy.visible || progress.visible) return;
         Data.initialize();
         Data.haveCredentials(function (user, password){
                                  banner.text = "Using stored username and password";
@@ -16,7 +22,10 @@ Page {
                                  cardDavClient.setUsername(user);
                                  cardDavClient.setPassword(password);
                                  cardDavClient.getCardNamesAsync();
+                                 busy.visible = true;
                              }, function () {
+                                 banner.text = "No user or password stored";
+                                 banner.open();
                                  window.goToSettings();
                              });
     }
@@ -64,14 +73,23 @@ Page {
 
     ProgressBar {
         id: progress
-        anchors.centerIn: parent
+        anchors.bottom: parent.bottom
         minimumValue: 0
         value: 0
+        visible: false
+    }
+
+    BusyIndicator {
+        id: busy
+        visible: false
+        running: visible
+        anchors.centerIn: parent
     }
 
     Connections {
         target:cardDavClient;
         onCardNames:{
+            busy.visible = false;
             console.log("NAMES" + names);
             if (!names) {
                 banner.text = "Authentication failed";
@@ -79,6 +97,7 @@ Page {
                 goToSettings();
             } else {
                 progress.maximumValue = names.length;
+                progress.visible = true;
                 Cards.startQuerying(names);
             }
         }
@@ -91,10 +110,10 @@ Page {
             progress.value ++;
         }
         onError:{
-            console.log("ERROR" + message);
             banner.text = "Error: " + message;
             banner.open();
-            goToSettings();
+            progress.visible = false;
+            busy.visible = false;
         }
     }
 

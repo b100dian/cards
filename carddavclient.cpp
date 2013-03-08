@@ -31,8 +31,8 @@ class CardDavClient::Impl{
 
         QNetworkRequest request(url);
 
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "text/xml; charset=\"utf-8\"");
         if (!payloadString.isEmpty()) {
-            request.setHeader(QNetworkRequest::ContentTypeHeader, "text/xml; charset=\"utf-8\"");
             request.setHeader(QNetworkRequest::ContentLengthHeader, payloadBytes.size());
         }
 
@@ -40,6 +40,8 @@ class CardDavClient::Impl{
             i != headers.constEnd(); ++i) {
             request.setRawHeader(i.key().toUtf8(), i.value().toUtf8());
         }
+
+        request.setRawHeader("Authorization", "Basic " + QByteArray(QString("%1:%2").arg(expl->username()).arg(expl->password()).toAscii().toBase64()));
 
         QString header;
         foreach(header, request.rawHeaderList()) qDebug() << header << "!" << request.rawHeader(header.toLocal8Bit());
@@ -53,7 +55,10 @@ public:
     explicit Impl(CardDavClient* parent = 0): expl(parent) {}
 
     void getRedirect() {
-        query("GET");
+        QMap<QString, QString> headers;
+        headers["Accept"] = "*/*";
+
+        query("GET", QString(), headers);
     }
 
     void optionsStart() {
@@ -93,7 +98,7 @@ public:
         query.setQuery("declare default element namespace \"DAV:\"; /multistatus/response/propstat/prop/displayname/string()");
 
         if (!query.evaluateTo(&output)) {
-            emit expl->error("Error Evaluating query");
+            emit expl->error("Error Evaluating XML Query");
         } else {
             emit expl->cardNames(output);
         }
@@ -118,7 +123,8 @@ public:
         if (reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200) {
             emit expl->card(file,reply->readAll());
         } else {
-            qDebug()<<"gotFinished with code"<<reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            qDebug()<<"GET finished with code "<< reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()
+                <<" for request " << reply->request().url().path();
         }
     }
 
@@ -189,7 +195,7 @@ void CardDavClient::authenticationRequired(QNetworkReply* reply, QAuthenticator*
 }
 
 void CardDavClient::replyError(QNetworkReply::NetworkError networkError) {
-    emit error(QString("reply error ") + networkError);
+    emit error(QString("Reply error %1").arg(networkError));
 }
 
 void CardDavClient::replyFinished(QNetworkReply* reply) {
@@ -205,6 +211,8 @@ void CardDavClient::replyFinished(QNetworkReply* reply) {
             baseURL.setPath(redirectUrl.path());
             impl->optionsStart();
         }
+    } else if (reply->error()) {
+        qDebug () << "Hopefully this already got logged:" << reply->errorString();
     } else {
 
         if (requestVerb == "OPTIONS") {

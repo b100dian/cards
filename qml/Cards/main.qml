@@ -8,9 +8,6 @@ PageStackWindow {
     showStatusBar: true
     showToolBar: true
 
-    property string username;
-    property string password;
-
     SettingsPage {
         id:settingsPage
     }
@@ -30,19 +27,22 @@ PageStackWindow {
         ToolButton {
             flat: true
             iconSource: "toolbar-search"
+            onClicked: { banner.text = "Not yet implemented."; banner.open();}
         }
         ToolButton {
             flat: true
             iconSource: "toolbar-refresh"
-            checkable: true
-            onCheckedChanged: {
-                if (checked) {
-                    cardDavClient.getCardNamesAsync();
-                } else {
+            onClicked: { banner.text = "Not yet implemented."; banner.open();}
+//            checkable: true
+//            onCheckedChanged: {
+//                if (checked) {
+//                    cardDavClient.getCardNamesAsync();
 
-                }
+//                } else {
 
-            }
+//                }
+
+//            }
         }
         ToolButton {
             flat: true

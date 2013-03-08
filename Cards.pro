@@ -46,5 +46,5 @@ OTHER_FILES +=
 RESOURCES += \
     resources.qrc
 
-VERSION = 0.4
-DEPLOYMENT.display_name="CardDav Client Test"
+VERSION = 0.6
+DEPLOYMENT.display_name="CardDav Client Prototype"

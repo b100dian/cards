@@ -5,6 +5,13 @@ import "data.js" as Data
 Page {
     id:settingsPage
     tools:toolBarLayout
+    onStatusChanged: {
+        console.log ("SettingsPage status " + status)
+        if (status == PageStatus.Active) {
+            userField.text = cardDavClient.username;
+            passwordField.text = cardDavClient.password;
+        }
+    }
     Column {
         anchors.left: parent.left
         anchors.right: parent.right
@@ -23,8 +30,6 @@ Page {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.right:parent.right
                 width:200
-                //text:cardDavClient.username
-                text:"b100dian"
             }
         }
         Row {
@@ -42,11 +47,17 @@ Page {
                 width:200
                 anchors.right:parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                //text: cardDavClient.password
-                text:"hmmtybkyzcbtlcjo"
             }
         }
     }
+
+    Column {
+        anchors.bottom: parent.bottom
+        Label {
+            text:"(c) 2013 Vlad Grecescu\nn85blog.wordpress.com\nb100dian@gmail.com"
+        }
+    }
+
 
     ToolBarLayout {
         id: toolBarLayout
@@ -63,10 +74,9 @@ Page {
                     banner.text = "User and password both required";
                     banner.open();
                 } else {
-                    cardDavClient.setUsername(userField.text)
-                    cardDavClient.setPassword(passwordField.text);
-                    Data.storeCredentials(cardDavClient.username, cardDavClient.password);
-                    window.pageStack.depth <= 1 ? window.goToMainPage() : window.pageStack.pop();
+                    Data.storeCredentials(userField.text, passwordField.text, function() {
+                                              window.pageStack.depth <= 1 ? window.goToMainPage() : window.pageStack.pop();
+                                          });
                 }
             }
         }

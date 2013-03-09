@@ -1,4 +1,4 @@
-var max = 10,
+var max = 5,
     connections = 0,
     i = 0,
     allNames=null;
@@ -30,15 +30,25 @@ function nextCard() {
 }
 
 function parseCard(c) {
+    var telreg = /TEL.*:(.*)/g;
+    var mailreg = /EMAIL.*:(.*)/g;
     var lines = c.split('\n');
-    var result = {};
+    var r;
+    var result = {tels:[], mails:[]};
     for (var l in lines) {
         if (lines[l].indexOf("FN:") === 0) {
             result.fullname = lines[l].slice(3,-1);
-        } else if (lines[l].indexOf("TEL;TYPE=CELL:") === 0) {
-            result.cell = lines[l].slice(14,-1);
+        } else if (r = telreg.exec(lines[l])) {
+            do {
+                result.tel = (result.tel?" ":"") + r[1];
+                result.tels.push(r[1]);
+            } while (r = telreg.exec(lines[l]));
+        } else if (r = mailreg.exec(lines[l])) {
+            do {
+                result.mail = (result.mail?" ":"") + r[1];
+                result.mails.push(r[1]);
+            } while (r = mailreg.exec(lines[l]));
         }
-
     }
     return result;
 }

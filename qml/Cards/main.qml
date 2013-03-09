@@ -33,16 +33,6 @@ PageStackWindow {
             flat: true
             iconSource: "toolbar-refresh"
             onClicked: { banner.text = "Not yet implemented."; banner.open();}
-//            checkable: true
-//            onCheckedChanged: {
-//                if (checked) {
-//                    cardDavClient.getCardNamesAsync();
-
-//                } else {
-
-//                }
-
-//            }
         }
         ToolButton {
             flat: true

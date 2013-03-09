@@ -12,13 +12,13 @@ Page {
     }
 
     onStatusChanged: {
-        console.log ("MainPage status " + status)
         if (status != PageStatus.Active || progress.visible) return;
         if (busy.visible || progress.visible) return;
         Data.initialize();
         Data.haveCredentials(function (user, password){
                                  banner.text = "Using stored username and password";
                                  banner.open();
+                                 cardModel.clear();
                                  cardDavClient.setUsername(user);
                                  cardDavClient.setPassword(password);
                                  cardDavClient.getCardNamesAsync();
@@ -34,11 +34,43 @@ Page {
         id: cardModel
     }
 
+    ContextMenu  {
+        id:contactMenu;
+        MenuLayout {
+            id: menuLayout;
+            MenuItem {
+                text :"Call"
+                onClicked: {
+                    Qt.openUrlExternally("tel:"+tels[0]);
+                }
+            }
+            MenuItem {
+                text : "Mail"
+                onClicked: {
+                    Qt.openUrlExternally("mailto:"+mails[0]);
+                }
+            }
+        }
+    }
+
+
     Component {
         id: cardDelegate
         ListItem {
             onClicked: {
-                Qt.openUrlExternally("tel:"+cell);
+                for (var t = 0; t<tels.length; t++) {
+                    var menuComponent = Qt.createComponent("MenuItem.qml");
+                    if (menuComponent.status == Component.Ready) {
+                        var menuItem = m.createObject(menuLayout);
+                        menuItem.text = tels[t];
+                    } else {
+                        console.log ("CONTEXT component not ready " + t);
+                    }
+                }
+
+                contactMenu.open();
+
+                //Qt.openUrlExternally("tel:"+tels[0]);
             }
 
             Column {
@@ -49,11 +81,19 @@ Page {
                     role: "Title"
                     text: fullname
                 }
-                ListItemText {
-                    id: subtitleText
-                    mode: cardDelegate.mode
-                    role: "SubTitle"
-                    text: cell
+                Row {
+                    ListItemText {
+                        id: mailText
+                        mode: cardDelegate.mode
+                        role: "SubTitle"
+                        text: mail?mail:""
+                    }
+                    ListItemText {
+                        id: telText
+                        mode: cardDelegate.mode
+                        role: "SubTitle"
+                        text: tel?tel:""
+                    }
                 }
             }
         }
@@ -74,6 +114,8 @@ Page {
     ProgressBar {
         id: progress
         anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
         minimumValue: 0
         value: 0
         visible: false
@@ -90,7 +132,6 @@ Page {
         target:cardDavClient;
         onCardNames:{
             busy.visible = false;
-            console.log("NAMES" + names);
             if (!names) {
                 banner.text = "Authentication failed";
                 banner.open();
@@ -102,11 +143,43 @@ Page {
             }
         }
         onCard:{
-            console.log("CARD->\n" + card);
             var item = Cards.cardDone(cardName, card, function() {
                                           progress.visible = false;
+                                          cardList.activeFocus
                                       });
-            cardModel.append(item);
+            if (!item.fullname) {
+                console.log("CARD->\n" + card);
+                return;
+            }
+            // insert sorted
+            var pmax = cardModel.count;
+            var pmin = 0;
+            var pos;
+            while (1) {
+                pos = Math.floor((pmax + pmin)/2);
+                if (pos >= cardModel.count) {
+                    cardModel.append(item);
+                    break;
+                } else if (pos < 0) {
+                    cardModel.insert(0, item);
+                    break;
+                } else {
+                    var existing = cardModel.get(pos);
+                    if (existing.fullname < item.fullname) {
+                        pmin = pos + 1;
+                    } else if (item.fullname < existing.fullname){
+                        pmax = pos;
+                    } else {
+                        pmin = pmax = pos;
+                    }
+
+                    if (pmax <= pmin) {
+                        pos = pmin;
+                        cardModel.insert(pos, item);
+                        break;
+                    }
+                }
+            }
             progress.value ++;
         }
         onError:{

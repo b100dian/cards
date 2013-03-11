@@ -44,7 +44,8 @@ Page {
                 MenuItem {
                     text :"Call " + t
                     onClicked: {
-                        Qt.openUrlExternally("tel:" + contactMenu.tels[index]);
+                        Qt.openUrlExternally("tel:" + t);
+                        contactMenu.close();
                     }
                 }
             }
@@ -53,7 +54,8 @@ Page {
                 MenuItem {
                     text : "Mail " + m
                     onClicked: {
-                        Qt.openUrlExternally("mailto:"+contactMenu.mails[index]);
+                        contactMenu.close();
+                        Qt.openUrlExternally("mailto:" + m);
                     }
                 }
             }

@@ -9,7 +9,8 @@ DEPLOYMENTFOLDERS = folder_01
 # Additional import path used to resolve QML modules in Creator's code model
 QML_IMPORT_PATH =
 
-symbian:TARGET.UID3 = 0xE12CAF09
+#symbian:TARGET.UID3 = 0xE12CAF09
+symbian:TARGET.UID3 = 0xA0016289
 
 # Smart Installer package's UID
 # This UID is from the protected range and therefore the package will
@@ -46,5 +47,5 @@ OTHER_FILES +=
 RESOURCES += \
     resources.qrc
 
-VERSION = 0.09
-DEPLOYMENT.display_name="CardDav Client Prototype"
+VERSION = 0.10
+DEPLOYMENT.display_name="CardDav Prototype"

@@ -36,18 +36,25 @@ Page {
 
     ContextMenu  {
         id:contactMenu;
+        property variant tels;
+        property variant mails;
         MenuLayout {
-            id: menuLayout;
-            MenuItem {
-                text :"Call"
-                onClicked: {
-                    Qt.openUrlExternally("tel:"+tels[0]);
+            Repeater {
+                model:contactMenu.tels;
+                MenuItem {
+                    text :"Call " + t
+                    onClicked: {
+                        Qt.openUrlExternally("tel:" + contactMenu.tels[index]);
+                    }
                 }
             }
-            MenuItem {
-                text : "Mail"
-                onClicked: {
-                    Qt.openUrlExternally("mailto:"+mails[0]);
+            Repeater {
+                model:contactMenu.mails;
+                MenuItem {
+                    text : "Mail " + m
+                    onClicked: {
+                        Qt.openUrlExternally("mailto:"+contactMenu.mails[index]);
+                    }
                 }
             }
         }
@@ -58,39 +65,26 @@ Page {
         id: cardDelegate
         ListItem {
             onClicked: {
-                for (var t = 0; t<tels.length; t++) {
-                    var menuComponent = Qt.createComponent("MenuItem.qml");
-                    if (menuComponent.status == Component.Ready) {
-                        var menuItem = m.createObject(menuLayout);
-                        menuItem.text = tels[t];
-                    } else {
-                        console.log ("CONTEXT component not ready " + t);
-                    }
-                }
-
+                contactMenu.tels = tels;
+                contactMenu.mails = mails;
                 contactMenu.open();
-
-                //Qt.openUrlExternally("tel:"+tels[0]);
             }
 
             Column {
                 anchors.fill: cardDelegate.padding
                 ListItemText {
                     id: titleText
-                    mode: cardDelegate.mode
                     role: "Title"
                     text: fullname
                 }
-                Row {
+                Flow {
                     ListItemText {
                         id: mailText
-                        mode: cardDelegate.mode
                         role: "SubTitle"
                         text: mail?mail:""
                     }
                     ListItemText {
                         id: telText
-                        mode: cardDelegate.mode
                         role: "SubTitle"
                         text: tel?tel:""
                     }

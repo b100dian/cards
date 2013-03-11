@@ -20,7 +20,6 @@ function haveCredentials(callback, error) {
         if (result.rows.length !== 2){
             error();
         } else {
-            console.log ("ROWs"+JSON.stringify(result.rows.item(0)) + "_" + JSON.stringify(result.rows.item(1)));
             var user = result.rows.item(0).value;
             var password = result.rows.item(1).value;
             callback(user, password);

@@ -34,19 +34,19 @@ function parseCard(c) {
     var mailreg = /EMAIL.*:(.*)/g;
     var lines = c.split('\n');
     var r;
-    var result = {tels:[], mails:[]};
+    var result = {tels:[], mails:[], tel:"", mail:""};
     for (var l in lines) {
         if (lines[l].indexOf("FN:") === 0) {
             result.fullname = lines[l].slice(3,-1);
         } else if (r = telreg.exec(lines[l])) {
             do {
-                result.tel = (result.tel?" ":"") + r[1];
-                result.tels.push(r[1]);
+                result.tel += (result.tel.length?",":"") + r[1];
+                result.tels.push({t:r[1]});
             } while (r = telreg.exec(lines[l]));
         } else if (r = mailreg.exec(lines[l])) {
             do {
-                result.mail = (result.mail?" ":"") + r[1];
-                result.mails.push(r[1]);
+                result.mail += r[1]+",";
+                result.mails.push({m:r[1]});
             } while (r = mailreg.exec(lines[l]));
         }
     }

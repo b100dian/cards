@@ -1,4 +1,5 @@
 import QtQuick 1.1
+import QtMobility.contacts 1.1
 import com.nokia.symbian 1.1
 import com.nokia.extras 1.1
 
@@ -7,6 +8,10 @@ import "cards.js" as Cards
 import "data.js" as Data
 Page {
     id: mainPage
+
+    ContactModel {
+        id:contactModel;
+    }
 
     Component.onCompleted:  {
     }
@@ -18,9 +23,17 @@ Page {
         Data.haveCredentials(function (user, password){
                                  banner.text = "Using stored username and password";
                                  banner.open();
+
                                  cardModel.clear();
+                                 var existingCards = Data.getExistingCards();
+                                 for (var i in existingCards){
+                                     var item = Cards.parseCard(existingCards[i]);
+                                     item.isNew = false;
+                                     insertSorted(item);
+                                 }
+
                                  cardDavClient.setUsername(user);
-                                 cardDavClient.setPassword(password);
+                                 cardDavClient.setPassword(password);                                 
                                  cardDavClient.getCardNamesAsync();
                                  busy.visible = true;
                              }, function () {
@@ -75,6 +88,7 @@ Page {
             Column {
                 anchors.fill: cardDelegate.padding
                 ListItemText {
+                    color: isNew?"cyan":"lightgray"
                     id: titleText
                     role: "Title"
                     text: fullname
@@ -127,55 +141,42 @@ Page {
     Connections {
         target:cardDavClient;
         onCardNames:{
-            busy.visible = false;
             if (!names) {
                 banner.text = "Authentication failed";
                 banner.open();
                 goToSettings();
             } else {
-                progress.maximumValue = names.length;
+                // Insert new names in a newcards
+                var newNames = Data.determineNewNames(names);
+
+                banner.text = "Fetching " + (newNames.length) + " new cards."
+                banner.open();
+
+                progress.maximumValue = newNames.length;
                 progress.visible = true;
-                Cards.startQuerying(names);
+
+                Cards.startQuerying(newNames);
             }
         }
         onCard:{
-            var item = Cards.cardDone(cardName, card, function() {
+            busy.visible = false;
+            var itemData = Cards.cardDone(cardName, card, function() {
                                           progress.visible = false;
                                           cardList.activeFocus
-                                      });
+                                     });
+            // TODO should have passed the etag until here?
+            Data.appendNewCard(cardName, itemData);
+
+            var item = Cards.parseCard(itemData);
+            item.isNew = true;
+
             if (!item.fullname) {
                 console.log("CARD->\n" + card);
                 return;
             }
-            // insert sorted
-            var pmax = cardModel.count;
-            var pmin = 0;
-            var pos;
-            while (1) {
-                pos = Math.floor((pmax + pmin)/2);
-                if (pos >= cardModel.count) {
-                    cardModel.append(item);
-                    break;
-                } else if (pos < 0) {
-                    cardModel.insert(0, item);
-                    break;
-                } else {
-                    var existing = cardModel.get(pos);
-                    if (existing.fullname < item.fullname) {
-                        pmin = pos + 1;
-                    } else if (item.fullname < existing.fullname){
-                        pmax = pos;
-                    } else {
-                        pmin = pmax = pos;
-                    }
 
-                    if (pmax <= pmin) {
-                        pos = pmin;
-                        cardModel.insert(pos, item);
-                        break;
-                    }
-                }
-            }
+            insertSorted(item);
+
             progress.value ++;
         }
         onError:{
@@ -183,6 +184,43 @@ Page {
             banner.open();
             progress.visible = false;
             busy.visible = false;
+        }
+    }
+
+    function insertSorted(item) {
+        // insert sorted
+        var pmax = cardModel.count;
+        var pmin = 0;
+        var pos;
+        while (1) {
+            pos = Math.floor((pmax + pmin)/2);
+            if (pos >= cardModel.count) {
+                cardModel.append(item);
+                break;
+            } else if (pos < 0) {
+                cardModel.insert(0, item);
+                break;
+            } else {
+                var existing = cardModel.get(pos);
+                if (existing.fullname < item.fullname) {
+                    pmin = pos + 1;
+                } else if (item.fullname < existing.fullname){
+                    pmax = pos;
+                } else {
+                    pmin = pmax = pos;
+                }
+
+                if (pmax <= pmin) {
+                    pos = pmin;
+                    if (item.fullname == existing.fullname) {
+                        console.log ("Replacing " + item.fullname + " at pos " + pos);
+                        cardModel.set(pos, item);
+                    } else {
+                        cardModel.insert(pos, item);
+                    }
+                    break;
+                }
+            }
         }
     }
 

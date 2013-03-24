@@ -74,9 +74,8 @@ Page {
                     banner.text = "User and password both required";
                     banner.open();
                 } else {
-                    Data.storeCredentials(userField.text, passwordField.text, function() {
-                                              window.pageStack.depth <= 1 ? window.goToMainPage() : window.pageStack.pop();
-                                          });
+                    Data.storeCredentials(userField.text, passwordField.text);
+                    return window.pageStack.depth <= 1 ? window.goToMainPage() : window.pageStack.pop();
                 }
             }
         }

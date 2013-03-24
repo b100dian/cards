@@ -31,7 +31,7 @@ symbian:TARGET.CAPABILITY += NetworkServices
 # CONFIG += qdeclarative-boostable
 
 # Add dependency to Symbian components
-CONFIG += qt-components
+CONFIG += qt-components mobility
 
 # The .cpp file which was generated for your project. Feel free to hack it.
 SOURCES += main.cpp carddavclient.cpp
@@ -47,5 +47,5 @@ OTHER_FILES +=
 RESOURCES += \
     resources.qrc
 
-VERSION = 0.10
+VERSION = 0.12
 DEPLOYMENT.display_name="CardDav Prototype"

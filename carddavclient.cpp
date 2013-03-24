@@ -95,7 +95,7 @@ public:
         QXmlQuery query;
         QStringList output;
         query.setFocus(reply->readAll());
-        query.setQuery("declare default element namespace \"DAV:\"; /multistatus/response/propstat/prop/displayname/string()");
+        query.setQuery("declare default element namespace \"DAV:\"; /multistatus/response/propstat/prop/concat(displayname/string(),'`',getetag/string())");
 
         if (!query.evaluateTo(&output)) {
             emit expl->error("Error Evaluating XML Query");

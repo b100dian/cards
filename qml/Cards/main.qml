@@ -24,7 +24,7 @@ PageStackWindow {
             iconSource: "toolbar-back"
             onClicked: window.pageStack.depth <= 1 ? Qt.quit() : window.pageStack.pop()
         }
-        ToolButton {
+/*        ToolButton {
             flat: true
             iconSource: "toolbar-search"
             onClicked: { banner.text = "Not yet implemented."; banner.open();}
@@ -34,7 +34,7 @@ PageStackWindow {
             iconSource: "toolbar-refresh"
             onClicked: { banner.text = "Not yet implemented."; banner.open();}
         }
-        ToolButton {
+*/        ToolButton {
             flat: true
             iconSource: "toolbar-settings"
             onClicked: window.pageStack.push(settingsPage);

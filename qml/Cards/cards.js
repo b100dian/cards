@@ -15,7 +15,7 @@ function cardDone(name, data, done) {
     var more = nextCard();
     if (!more) done();
 
-    return parseCard(data);
+    return data;
 }
 
 function nextCard() {

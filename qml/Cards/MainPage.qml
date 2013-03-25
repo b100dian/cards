@@ -88,7 +88,7 @@ Page {
             Column {
                 anchors.fill: cardDelegate.padding
                 ListItemText {
-                    color: isNew?"cyan":"lightgray"
+                    color: isNew?"#1381DD":"lightgray"
                     id: titleText
                     role: "Title"
                     text: fullname
@@ -136,6 +136,8 @@ Page {
         visible: false
         running: visible
         anchors.centerIn: parent
+        width: 40
+        height: 40
     }
 
     Connections {
@@ -149,13 +151,18 @@ Page {
                 // Insert new names in a newcards
                 var newNames = Data.determineNewNames(names);
 
-                banner.text = "Fetching " + (newNames.length) + " new cards."
-                banner.open();
+                if (newNames.length) {
+                    banner.text = "Fetching " + (newNames.length) + " new cards."
+                    banner.open();
 
-                progress.maximumValue = newNames.length;
-                progress.visible = true;
+                    progress.maximumValue = newNames.length;
+                    progress.visible = true;
 
-                Cards.startQuerying(newNames);
+                    Cards.startQuerying(newNames);
+                } else {
+                    busy.visible = false;
+                    console.log("done.");
+                }
             }
         }
         onCard:{

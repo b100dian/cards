@@ -90,9 +90,14 @@ function determineNewNames(names) {
         tx.executeSql("DELETE FROM newcards WHERE accountId = ?", accountId);
         var name, etag;
         for (var i in names) {
+
+
             var split = names[i].split('`');
             name = split[0];
             etag = split[1];
+
+            if (name == 'default') continue; // sorry Mr. Default, but thats some weird cardID
+
             tx.executeSql("INSERT INTO newcards (accountId, cardid, etag) VALUES (?,?,?)",
                           [accountId, name, etag]);
         }

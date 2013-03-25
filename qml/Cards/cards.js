@@ -6,23 +6,25 @@ var max = 5,
 function startQuerying(names, model) {
     allNames = names;
     while(connections < max) {
-        nextCard();
+        if (!nextCard()) break; //less cards than max connections
     }
 }
 
 function cardDone(name, data, done) {
     connections--;
     var more = nextCard();
-    if (!more) done();
+    if (!more) {
+        done();
+    }
 
     return data;
 }
 
 function nextCard() {
-    i++;
     if (i < allNames.length) {
         connections++;
         cardDavClient.getCardAsync(allNames[i]);
+        i++;
         return true;
     } else {
         return false;

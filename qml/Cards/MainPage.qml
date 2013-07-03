@@ -9,17 +9,23 @@ import "data.js" as Data
 Page {
     id: mainPage
 
-    ContactModel {
+/*    ContactModel {
         id:contactModel;
     }
-
+*/
     Component.onCompleted:  {
     }
 
     onStatusChanged: {
         if (status != PageStatus.Active || progress.visible) return;
         if (busy.visible || progress.visible) return;
+        try {
         Data.initialize();
+        } catch (e) {
+            banner.text = e;
+            banner.open();
+        }
+
         Data.haveCredentials(function (user, password){
                                  banner.text = "Using stored username and password";
                                  banner.open();
@@ -114,6 +120,9 @@ Page {
         anchors.fill: parent
         model: cardModel
         delegate: cardDelegate
+        highlightRangeMode: ListView.StrictlyEnforceRange
+        section.property: "fullname"
+        section.criteria: ViewSection.FirstCharacter
     }
 
     ScrollDecorator {

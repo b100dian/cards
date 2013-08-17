@@ -34,6 +34,10 @@ function initialize() {
     db.transaction(createTables);
 }
 
+function haveTokens(callback, error) {
+    error();
+}
+
 function haveCredentials(callback, error) {
     var db = getDatabase();
 

@@ -8,14 +8,15 @@ PageStackWindow {
     showStatusBar: true
     showToolBar: true
 
-    SettingsPage {
-        id:settingsPage
-    }
+    property string client_id: "244047469353.apps.googleusercontent.com"
+    property string client_secret: "P3OTFvRVwLWacPAQKbAZgG57"
+    property bool useOAuth: true
 
-    InfoBanner {
-        id:banner
-        timeout:4000
-    }
+    SettingsPage { id:settingsPage }
+
+    OAuthPage { id:oAuthPage }
+
+    InfoBanner { id:banner; timeout:4000 }
 
     ToolBarLayout {
         id: toolBarLayout
@@ -41,6 +42,10 @@ PageStackWindow {
         }
     }
 
+
+    function goToOAuth() {
+        window.pageStack.push(oAuthPage);
+    }
 
     function goToSettings() {
         window.pageStack.push(settingsPage);

@@ -26,20 +26,31 @@ Page {
             banner.open();
         }
 
-        Data.haveCredentials(function (user, password){
+        if (window.useOAuth) {
+            Data.haveTokens(function (token, refresh_token){
+                                 banner.text = "Using stored OAuth token";
+                                 banner.open();
+
+                                 loadStoredCards();
+
+                                 cardDavClient.setToken(token);
+                                 cardDavClient.getCardNamesAsync();
+                                 busy.visible = true;
+                             }, function () {
+                                 banner.text = "No OAuth token";
+                                 banner.open();
+                                 window.goToOAuth();
+                             });
+        } else {
+            Data.haveCredentials(function (user, password){
                                  banner.text = "Using stored username and password";
                                  banner.open();
 
-                                 cardModel.clear();
-                                 var existingCards = Data.getExistingCards();
-                                 for (var i in existingCards){
-                                     var item = Cards.parseCard(existingCards[i]);
-                                     item.isNew = false;
-                                     insertSorted(item);
-                                 }
+
+                                 loadStoredCards();
 
                                  cardDavClient.setUsername(user);
-                                 cardDavClient.setPassword(password);                                 
+                                 cardDavClient.setPassword(password);
                                  cardDavClient.getCardNamesAsync();
                                  busy.visible = true;
                              }, function () {
@@ -47,6 +58,7 @@ Page {
                                  banner.open();
                                  window.goToSettings();
                              });
+        }
     }
 
     ListModel {
@@ -155,7 +167,10 @@ Page {
             if (!names) {
                 banner.text = "Authentication failed";
                 banner.open();
-                goToSettings();
+                if (window.useOAuth)
+                    goToOAuth();
+                else
+                    goToSettings();
             } else {
                 // Insert new names in a newcards
                 var newNames = Data.determineNewNames(names);
@@ -200,6 +215,16 @@ Page {
             banner.open();
             progress.visible = false;
             busy.visible = false;
+        }
+    }
+
+    function loadStoredCards() {
+        cardModel.clear();
+        var existingCards = Data.getExistingCards();
+        for (var i in existingCards){
+            var item = Cards.parseCard(existingCards[i]);
+            item.isNew = false;
+            insertSorted(item);
         }
     }
 

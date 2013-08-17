@@ -36,7 +36,7 @@ Page {
             anchors.left: parent.left
             anchors.right: parent.right
             Label {
-                text: "Password:"
+                text: "Key:"
                 width:100
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -47,6 +47,13 @@ Page {
                 width:200
                 anchors.right:parent.right
                 anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+        Row {
+            RadioButton {
+                text: "OAuth"
+                checked: true
+                enabled: false
             }
         }
     }

@@ -54,3 +54,34 @@ function parseCard(c) {
     }
     return result;
 }
+
+function getAccessToken(code, success, error) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "https://accounts.google.com/o/oauth2/token", true);
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    var params = {
+        code:code,
+        client_id:window.client_id,
+        client_secret:window.client_secret,
+        grant_type:"authorization_code"
+    };
+    var paramsStr = Object.keys(params).map(
+            function(k){return k+":"+encodeUriComponent(params[k]);}
+            ).join("&");
+
+    xhr.onload = function (e) {
+        if (xhr.readyState == 4) {
+            if (xhr.status == 200) {
+                success(xhr.responseText);
+            } else {
+                console.log("XHR Error:" + xhr.statusText);
+            }
+        }
+    }
+
+    xhr.onerror = function (e) {
+        console.log("XHR Error:" + xhr.statusText);
+    }
+
+    xhr.send(paramsStr);
+}

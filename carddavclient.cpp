@@ -41,7 +41,11 @@ class CardDavClient::Impl{
             request.setRawHeader(i.key().toUtf8(), i.value().toUtf8());
         }
 
-        request.setRawHeader("Authorization", "Basic " + QByteArray(QString("%1:%2").arg(expl->username()).arg(expl->password()).toAscii().toBase64()));
+        if (expl->token().isEmpty()){
+            request.setRawHeader("Authorization", "Basic " + QByteArray(QString("%1:%2").arg(expl->username()).arg(expl->password()).toAscii().toBase64()));
+        } else {
+            request.setRawHeader("Authorization", "Bearer " + expl->token().toAscii());
+        }
 
         QString header;
         foreach(header, request.rawHeaderList()) qDebug() << header << "!" << request.rawHeader(header.toLocal8Bit());
@@ -180,12 +184,20 @@ void CardDavClient::setPassword(QString password) {
     this->_password = password;
 }
 
+void CardDavClient::setToken(QString token) {
+    this->_token = token;
+}
+
 QString CardDavClient::password() {
     return this->_password;
 }
 
 QString CardDavClient::username() {
     return this->_username;
+}
+
+QString CardDavClient::token() {
+    return this->_token;
 }
 
 void CardDavClient::authenticationRequired(QNetworkReply* reply, QAuthenticator* authenticator) {

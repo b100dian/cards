@@ -63,16 +63,18 @@ function getAccessToken(code, success, error) {
         code:code,
         client_id:window.client_id,
         client_secret:window.client_secret,
+        redirect_uri:"urn:ietf:wg:oauth:2.0:oob",
         grant_type:"authorization_code"
     };
     var paramsStr = Object.keys(params).map(
-            function(k){return k+":"+encodeUriComponent(params[k]);}
+            function(k){return k+"="+encodeURIComponent(params[k]);}
             ).join("&");
 
-    xhr.onload = function (e) {
+    xhr.onreadystatechange = function (e) {
         if (xhr.readyState == 4) {
             if (xhr.status == 200) {
-                success(xhr.responseText);
+                var response = JSON.parse(xhr.responseText);
+                success(response);
             } else {
                 console.log("XHR Error:" + xhr.statusText);
             }

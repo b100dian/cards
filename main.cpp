@@ -10,8 +10,10 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     QmlApplicationViewer viewer;
 
+    // TODO This is another URL apart from accountURL in JavaScript!!
     viewer.rootContext()->setContextProperty("cardDavClient",
-       new CardDavClient(QUrl("https://google.com/.well-known/carddav"), &viewer));
+        new CardDavClient(QUrl("https://google.com/.well-known/carddav"), &viewer));
+//      new CardDavClient(QUrl("https://www.google.com/calendar/dav"), &viewer));
 
     viewer.setMainQmlFile(QLatin1String("qml/Cards/main.qml"));
     viewer.showExpanded();

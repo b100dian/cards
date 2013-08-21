@@ -1,7 +1,9 @@
+// Account Id now means: 1 = old basic auth, 2 = OAuth
 var accountId = 1;
 var accountUrl = 'https://google.com/.well-known/carddav';
 
 function getDatabase() {
+    if (window.useOAuth) accountId = 2; // WHatta hack
     return openDatabaseSync("Cards", "1.0", "Contacts", 100000);
 }
 
@@ -36,6 +38,16 @@ function initialize() {
 
 function haveTokens(callback, error) {
     error();
+    return;
+    haveCredentials(function(email, response){
+        console.log("Got access token:" + response);
+        callback(JSON.parse(response).access_token);
+    }, error);
+}
+
+/** call this with whole JSON OAUTH response */
+function storeTokens(email, result) {
+    storeCredentials(email, JSON.stringify(result));
 }
 
 function haveCredentials(callback, error) {

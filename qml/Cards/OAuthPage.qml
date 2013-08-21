@@ -3,10 +3,19 @@ import QtQuick 1.1
 import QtWebKit 1.0
 
 import "cards.js" as Cards
+import "data.js" as Data
 
 Page {
     id:settingsPage
     tools:toolBarLayout
+
+    onStatusChanged: {
+        if (status != PageStatus.Active) return;
+        loginView.url = "https://accounts.google.com/o/oauth2/auth?scope=email+" +
+                "https://www.googleapis.com/auth/carddav" +
+                "&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code&client_id=" + window.client_id +
+                "";
+    }
 
     Flickable {
         id: flickable
@@ -19,21 +28,20 @@ Page {
         anchors.right: parent.right
         WebView {
             id: loginView
-            url: "https://accounts.google.com/o/oauth2/auth?scope=email+" +
-                 "https%3A%2F%2Fwww.google.com%2Fm8%2Ffeeds" +
-                 //"https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email" +
-                 //%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile" +
-                 "&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code&client_id=" + window.client_id
             onTitleChanged: {
                 console.log("new title:" + title);
                 // detecting 4/blabasdfasdf
                 var slashPos = title.indexOf("/");
                 if (slashPos > 1 && title[slashPos - 1]<='9' && title[slashPos - 1] >= '0') {
-                    Cards.getAccessToken(title.substring(slashPos - 1), function (accessToken) {
-                        cardDavClient.setToken(accessToken);
-                        window.pageStack.depth <= 1 ? window.goToMainPage() : window.pageStack.pop();
-                                         });
-                    console.log ("waiting for access token.");
+                    Cards.getAccessToken(title.substring(slashPos - 1), function (response) {
+                        // save the whole response in the database
+                        Data.storeTokens("EMAIL TODO", response);
+                        // set the access token for the current connections
+                        window.initialPage.loadCardsWithToken(response.access_token);
+                    });
+                    banner.text = "Getting 0Auth2 token";
+                    banner.open();
+                    window.pageStack.depth <= 1 ? window.goToMainPage() : window.pageStack.pop();
                 }
             }
             settings.localStorageDatabaseEnabled: true

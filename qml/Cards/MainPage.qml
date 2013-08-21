@@ -20,27 +20,18 @@ Page {
         if (status != PageStatus.Active || progress.visible) return;
         if (busy.visible || progress.visible) return;
         try {
-        Data.initialize();
+            Data.initialize();
         } catch (e) {
-            banner.text = e;
+            banner.text = e.toString();
             banner.open();
         }
 
         if (window.useOAuth) {
-            Data.haveTokens(function (token, refresh_token){
-                                 banner.text = "Using stored OAuth token";
-                                 banner.open();
-
-                                 loadStoredCards();
-
-                                 cardDavClient.setToken(token);
-                                 cardDavClient.getCardNamesAsync();
-                                 busy.visible = true;
-                             }, function () {
-                                 banner.text = "No OAuth token";
-                                 banner.open();
-                                 window.goToOAuth();
-                             });
+            Data.haveTokens(loadCardsWithToken, function () {
+                                banner.text = "No OAuth token, requesting access.";
+                                banner.open();
+                                window.goToOAuth();
+                            });
         } else {
             Data.haveCredentials(function (user, password){
                                  banner.text = "Using stored username and password";
@@ -216,6 +207,17 @@ Page {
             progress.visible = false;
             busy.visible = false;
         }
+    }
+
+    function loadCardsWithToken(token) {
+        banner.text = "Using stored OAuth token.";
+        banner.open();
+
+        loadStoredCards();
+
+        cardDavClient.setToken(token);
+        cardDavClient.getCardNamesAsync();
+        busy.visible = true;
     }
 
     function loadStoredCards() {

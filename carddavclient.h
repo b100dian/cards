@@ -15,6 +15,7 @@ class CardDavClient : public QObject
     QString _username;
     QString _password;
     QString _token;
+    bool _haveURL;
 
 public:
     explicit CardDavClient(QUrl baseURL, QObject *parent = 0);
@@ -24,6 +25,10 @@ public:
     Q_INVOKABLE void setUsername(QString username);
     Q_INVOKABLE void setPassword(QString password);
     Q_INVOKABLE void setToken(QString token);
+
+    void overrideRelativePath(QString path);
+    bool isHaveURL();
+
     Q_INVOKABLE QString username();
     Q_INVOKABLE QString password();
     Q_INVOKABLE QString token();

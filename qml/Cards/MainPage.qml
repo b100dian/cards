@@ -206,6 +206,7 @@ Page {
             banner.open();
             progress.visible = false;
             busy.visible = false;
+            goToOAuth();
         }
     }
 

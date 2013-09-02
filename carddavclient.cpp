@@ -24,6 +24,9 @@ class CardDavClient::Impl{
         payload->open(QBuffer::ReadWrite);
         payload->seek(0);
 
+        qDebug()  << "Querying " << verb << ":" << expl->baseURL << " and " << path  << "!\n for:\n"
+                     << payloadString;
+
         QUrl url = expl->baseURL;
         if (!path.isEmpty()) {
             url.setPath(url.path() + "/" + path);
@@ -31,7 +34,10 @@ class CardDavClient::Impl{
 
         QNetworkRequest request(url);
 
-        request.setHeader(QNetworkRequest::ContentTypeHeader, "text/xml; charset=\"utf-8\"");
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "text/xml");
+        request.setRawHeader("Accept", "*/*");
+        request.setRawHeader("User-Agent", "curl/7.32.0");
+        request.setRawHeader("Host", "google.com");
         if (!payloadString.isEmpty()) {
             request.setHeader(QNetworkRequest::ContentLengthHeader, payloadBytes.size());
         }
@@ -88,23 +94,41 @@ public:
         }
     }
 
-    void propfindStart() {
+    void propfindStart(QString payload = QString()) {
         QMap<QString, QString> headers;
         headers["Depth"] = "1";
 
-        query("PROPFIND", headers);
+        query("PROPFIND", headers, payload);
     }
 
     void propfindFinished(QNetworkReply* reply) {
-        QXmlQuery query;
+        QXmlQuery queryCards;
+        QXmlQuery queryHref;
         QStringList output;
-        query.setFocus(reply->readAll());
-        query.setQuery("declare default element namespace \"DAV:\"; /multistatus/response/propstat/prop/concat(displayname/string(),'`',getetag/string())");
 
-        if (!query.evaluateTo(&output)) {
-            emit expl->error("Error Evaluating XML Query");
+        QString wholeReply(reply->readAll());
+        qDebug() << wholeReply;
+
+        if (!expl->isHaveURL()) {
+            queryHref.setFocus(wholeReply);
+            queryHref.setQuery("declare default element namespace \"DAV:\"; /multistatus/response/href/string()");
+            if (!queryHref.evaluateTo(&output) || output.length() < 1) {
+                qDebug()<<output;
+                emit expl->error("Error Evaluating href Query");
+            } else {
+                expl->overrideRelativePath(output[0]);
+                // loop back
+                propfindStart();
+            }
         } else {
-            emit expl->cardNames(output);
+            queryCards.setFocus(wholeReply);
+            queryCards.setQuery("declare default element namespace \"DAV:\"; /multistatus/response/propstat/prop/concat(displayname/string(),'`',getetag/string())");
+
+            if (!queryCards.evaluateTo(&output) || !output.length()) {
+                expl->error("Error evaluating cards query");
+            } else {
+                emit expl->cardNames(output);
+            }
         }
     }
 
@@ -132,18 +156,13 @@ public:
         }
     }
 
-#ifdef CARD_REPORT
     void reportStart(){
-        QString payload("<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                       "<C:addressbook-query xmlns:D=\"DAV:\""
-                       "                xmlns:C=\"urn:ietf:params:xml:ns:carddav\">"
-                       "    <D:prop>"
-                       "        <D:getetag/>"
-                       "        <C:address-data content-type=\"application/vcard+xml\" version=\"2.0\"/>"
-                       "    </D:prop>"
-                       "    <C:filter/>"
-                       "</C:addressbook-query>"
-                     );
+        QString payload("<D:propfind xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:carddav\">\n"
+                        "<D:prop>\n"
+                        "<D:getetag />\n"
+                        "<D:name />\n"
+                        "</D:prop>\n"
+                        "</D:propfind>");
         query("REPORT", QMap<QString,QString>(), payload);
     }
 
@@ -151,7 +170,6 @@ public:
         qDebug() << "REPORT body ";
         qDebug() << reply->readAll();
     }
-#endif
 };
 
 CardDavClient::CardDavClient(QUrl url, QObject *parent) :
@@ -169,7 +187,9 @@ CardDavClient::CardDavClient(QUrl url, QObject *parent) :
 
 void CardDavClient::getCardNamesAsync()
 {
-    impl->getRedirect();
+    //It seems GET is not redirected anymore, nor OPTIONS, only propfind
+    //impl->getRedirect();
+    impl->propfindStart();
 }
 
 void CardDavClient::getCardAsync(QString cardName) {
@@ -210,18 +230,32 @@ void CardDavClient::replyError(QNetworkReply::NetworkError networkError) {
     emit error(QString("Reply error %1").arg(networkError));
 }
 
+void CardDavClient::overrideRelativePath(QString path) {
+    _haveURL = true;
+    baseURL.setPath(path);
+}
+
+bool CardDavClient::isHaveURL() {
+    return _haveURL;
+}
+
 void CardDavClient::replyFinished(QNetworkReply* reply) {
     QString requestVerb(reply->request().attribute(QNetworkRequest::CustomVerbAttribute).toString());
     QUrl redirectUrl(reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl());
 
     if (!redirectUrl.isEmpty()) {
-        if (requestVerb != "GET") {
-            emit error(QString("Unexpected redirect while requesting for ") + requestVerb + QString(" ") + reply->request().url().toString());
-        } else {
-            qDebug()<<"Redirected to:"<<redirectUrl.path();
-            // replay (yes with an a) everything with new URL
-            baseURL.setPath(redirectUrl.path());
+        qDebug()<<"Redirected to:"<<redirectUrl.path();
+        // replay (yes, with an a) everything with new URL
+        QString what = redirectUrl.path();
+        what.chop(1);
+        overrideRelativePath(what);
+        if (requestVerb == "PROPFIND") {
+            impl->propfindStart(QString() + "<?xml version=\"1.0\" encoding=\"UTF-8\" ?> " +
+                                "<D:propfind xmlns:D=\"DAV:\" xmlns:C=\"urn:ietf:params:xml:ns:carddav\"> <D:prop> <D:getetag /> <D:name /> </D:prop> </D:propfind>");
+        } else if (requestVerb == "OPTIONS") {
             impl->optionsStart();
+        } else if (requestVerb == "REPORT") {
+            impl->reportStart();
         }
     } else if (reply->error()) {
         qDebug () << "Hopefully this already got logged:" << reply->errorString();

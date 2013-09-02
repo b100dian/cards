@@ -37,8 +37,7 @@ function initialize() {
 }
 
 function haveTokens(callback, error) {
-    error();
-    return;
+    //error();return;
     haveCredentials(function(email, response){
         console.log("Got access token:" + response);
         callback(JSON.parse(response).access_token);
@@ -112,7 +111,7 @@ function determineNewNames(names) {
             name = split[0];
             etag = split[1];
 
-            if (name == 'default') continue; // sorry Mr. Default, but thats some weird cardID
+            if (name == 'default' || name == "") continue; // sorry Mr. Default, but thats some weird cardID
 
             tx.executeSql("INSERT INTO newcards (accountId, cardid, etag) VALUES (?,?,?)",
                           [accountId, name, etag]);
